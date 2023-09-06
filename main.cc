@@ -8,61 +8,73 @@
 #include <vector>
 #include <fstream>
 #include <filesystem>
-
+#include <chrono>
 // Neddleman-Wunsch
 
 #define inf std::numeric_limits<int>::min();
 
 typedef std::vector<int> vi;
 typedef std::vector<vi> vvi;
-
+const std::string RESET_COLOR = "\033[0m";
+const std::string RED_TEXT = "\033[31m";
+const std::string GREEN_TEXT = "\033[32m";
+const std::string YELLOW_TEXT = "\033[33m";
+const std::string BLUE_TEXT = "\033[34m";
+const std::string MAGENTA_TEXT = "\033[35m";
+const std::string CYAN_TEXT = "\033[36m";
+const std::string BOLD_TEXT = "\033[1m";
 const int penaltyScore = 2;
+typedef long long ll;
 
 using namespace std;
 
-struct Node
+void printAlignment(vector<int> &path, string &s, string &t)
 {
-  int dir;
-  Node *children[3];
-  int nChilds;
-  Node(int _dir)
+  int pathLength = path.size() - 1;
+  int ti = 0;
+  int si = 0;
+  cout << "s: ";
+  for (int dir = pathLength; dir >= 0; dir--)
   {
-    dir = _dir;
-    nChilds = 0;
-    children[0] = nullptr;
-    children[1] = nullptr;
-    children[2] = nullptr;
+    if (path[dir] == 2)
+      cout << "_";
+    else
+      cout << s[si++];
   }
-  Node()
+  cout << '\n';
+  cout << "t: ";
+  for (int dir = pathLength; dir >= 0; dir--)
   {
-    dir = -1;
-    nChilds = 0;
-    children[0] = nullptr;
-    children[1] = nullptr;
-    children[2] = nullptr;
+    if (path[dir] == 3)
+      cout << "_";
+    else
+      cout << t[ti++];
   }
-  void addChild(Node *child)
-  {
-    children[nChilds++] = child;
-  }
-  void setDir(int _dir)
-  {
-    dir = _dir;
-  }
-  bool hasNotDir()
-  {
-    return dir == -1;
-  }
-};
+  cout << "\n";
+}
 
-void traceback(int i, int j, vvi &dp, string &s, string &t, Node *root)
+void traceback(int i, int j, vvi &dp, string &s, string &t, vector<int> &path, ll &count)
 {
   if (i == 0 && j == 0)
+  {
+    // "Código para imprimir el alineamiento"
+    cout << "[" << ++count << "]\n";
+    printAlignment(path, s, t);
+    cout << '\n';
+
+    // "Código para imprimir los pasos"
+    // cout << "[" << ++count << "] ";
+    // for (auto dir : path)
+    //   cout << dir;
+    // cout << '\n';
+    
+    // "Código para contar los alineamientos"
+    // ++count;
+
     return;
+  }
   else
   {
-    Node *currNode = new Node();
-
     int diag, up, left, max;
     bool match = s[i - 1] == t[j - 1];
 
@@ -91,118 +103,28 @@ void traceback(int i, int j, vvi &dp, string &s, string &t, Node *root)
 
     if (diag == max)
     {
-      currNode->setDir(match ? 0 : 1);
-      traceback(i - 1, j - 1, dp, s, t, currNode);
+      path.push_back(!match);
+      traceback(i - 1, j - 1, dp, s, t, path, count);
+      path.pop_back();
     }
     if (up == max)
     {
-      if (currNode->hasNotDir())
-      {
-        currNode->setDir(2);
-        traceback(i, j - 1, dp, s, t, currNode);
-      }
-      else
-      {
-        Node *newBranch = new Node(2);
-        traceback(i, j - 1, dp, s, t, newBranch);
-        root->addChild(newBranch);
-      }
+      path.push_back(2);
+      traceback(i, j - 1, dp, s, t, path, count);
+      path.pop_back();
     }
     if (left == max)
     {
-      if (currNode->hasNotDir())
-      {
-        currNode->setDir(3);
-        traceback(i - 1, j, dp, s, t, currNode);
-      }
-      else
-      {
-        Node *newBranch = new Node(3);
-        traceback(i - 1, j, dp, s, t, newBranch);
-        root->addChild(newBranch);
-      }
+      path.push_back(3);
+      traceback(i - 1, j, dp, s, t, path, count);
+      path.pop_back();
     }
-
-    root->addChild(currNode);
   }
 }
 
-void getPathsUtil(Node *node, std::vector<int> &currentPath, std::vector<std::vector<int>> &allPaths)
+int max3(int a, int b, int c)
 {
-  if (node == nullptr)
-    return;
-
-  currentPath.push_back(node->dir);
-
-  if (node->nChilds == 0)
-  {
-    allPaths.push_back(currentPath);
-  }
-  else
-  {
-    for (int i = 0; i < node->nChilds; ++i)
-    {
-      getPathsUtil(node->children[i], currentPath, allPaths);
-    }
-  }
-
-  currentPath.pop_back();
-}
-
-void getPaths(vvi &dp, string &s, string &t)
-{
-  int i, j;
-  i = s.size();
-  j = t.size();
-
-  Node *root = new Node();
-  traceback(i, j, dp, s, t, root);
-
-  std::vector<std::vector<int>> allPaths;
-  std::vector<int> currentPath;
-
-  getPathsUtil(root, currentPath, allPaths);
-
-  cout << "s:" << s << "\n";
-  cout << "t:" << t << "\n";
-  cout << "Aligments:\n";
-  for (const auto &path : allPaths)
-  {
-    int pathLength = path.size();
-    int ti = 0;
-    int si = 0;
-    for (int dir = pathLength - 1; dir >= 1; dir--)
-    {
-      if (path[dir] == 2)
-        cout << "_";
-      else
-        cout << s[si++];
-    }
-    cout << '\n';
-    for (int dir = pathLength - 1; dir >= 1; dir--)
-    {
-      if (path[dir] == 3)
-        cout << "_";
-      else
-        cout << t[ti++];
-    }
-    std::cout << std::endl;
-  }
-}
-
-int computeMax(int i, int j, vvi &dp, vvi &path, char si, char ti)
-{
-  int diag, vGap, hGap, max;
-  bool match = si == ti;
-
-  diag = dp[i - 1][j - 1] + (match ? +1 : -1);
-  vGap = dp[i - 1][j] - penaltyScore;
-  hGap = dp[i][j - 1] - penaltyScore;
-
-  max = std::max(diag, vGap);
-  max = std::max(max, hGap);
-
-  return max;
+  return max(max(a, b), c);
 }
 
 void show(vvi &dp)
@@ -223,36 +145,42 @@ void nw(std::string &s, std::string &t)
   rows = s.size();
   cols = t.size();
 
-  std::vector<std::vector<int>> dp, path;
-
+  std::vector<std::vector<int>> dp;
   dp.resize(rows + 1, std::vector<int>(cols + 1, 0));
-  path.resize(rows + 1, std::vector<int>(cols + 1, 0));
 
   for (int i = 1; i <= rows; i++)
-  {
     dp[i][0] = -penaltyScore * i;
-    path[i][0] = 1;
-  }
-  for (int j = 1; j <= cols; j++)
-  {
-    dp[0][j] = -penaltyScore * j;
-    path[0][j] = 3;
-  }
 
-  // show(dp);
+  for (int j = 1; j <= cols; j++)
+    dp[0][j] = -penaltyScore * j;
+
+  auto start = chrono::high_resolution_clock::now();
 
   for (int i = 1; i <= rows; i++)
-  {
     for (int j = 1; j <= cols; j++)
-    {
-      dp[i][j] = computeMax(i, j, dp, path, s[i - 1], t[j - 1]);
-      // show(dp);
-      // std::cout << '\n';
-    }
-  }
-  cout << "Se armo\n";
+      dp[i][j] = max3(
+          dp[i - 1][j - 1] + (s[i - 1] == t[j - 1] ? +1 : -1),
+          dp[i - 1][j] - penaltyScore,
+          dp[i][j - 1] - penaltyScore);
 
-  getPaths(dp, s, t);
+  auto stop = chrono::high_resolution_clock::now();
+  std::chrono::duration<double, std::milli> dpTime = stop - start;
+
+  cout << BOLD_TEXT << GREEN_TEXT << "[ INFO | Original Sequences ]\n"
+       << RESET_COLOR;
+  cout << "s: " << s << '\n';
+  cout << "t: " << t << "\n\n";
+
+  vector<int> tmpPath;
+  ll count = 0;
+  cout << BOLD_TEXT << GREEN_TEXT << "[ INFO | Possible Alignments with score " << dp[s.size()][t.size()] << "]\n"
+       << RESET_COLOR;
+  start = chrono::high_resolution_clock::now();
+  traceback(rows, cols, dp, s, t, tmpPath, count);
+  stop = chrono::high_resolution_clock::now();
+  std::chrono::duration<double, std::milli> seqTime = stop - start;
+
+  cout << BOLD_TEXT << GREEN_TEXT << "[ INFO | " << count << " alignments,\nnw in " << dpTime.count() << " milliseconds and \nalignment in " << seqTime.count() << " milliseconds.\nIn total, it's " << dpTime.count() + seqTime.count() << "]\n";
 }
 
 vector<string> getFilenames(string &dir)
@@ -302,11 +230,11 @@ int main()
   string dir = "../sequences";
   vector<string> filenames = getFilenames(dir);
   unordered_map<string, string> sequences = getSequences(filenames);
-  printSequences(sequences);
+  // printSequences(sequences);
 
-  std::string s, t;
-  s = "tcaagcgttagagaagtcattatgtgataaaaaaattcaacttggtatcaacttaactaa";
-  t = "attaaaggtttataccttcccaggtaacaaaccaaccaactttcgatctcttgtagatct";
-  nw(s, t);
-  // nw(sequences["Bacteria"], sequences["Sars-Cov"]);
+  // std::string s, t;
+  // s = "aaac";
+  // t = "agc";
+  // nw(s, t);
+  nw(sequences["Bacteria"], sequences["Sars-Cov"]);
 }
