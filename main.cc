@@ -28,9 +28,9 @@ typedef long long ll;
 
 using namespace std;
 
-void printAlignment(vector<int> &path, string &s, string &t)
+void printAlignment(vector<int> &path, string &s, string &t, int tam)
 {
-  int pathLength = path.size() - 1;
+  int pathLength = tam - 1;
   int ti = 0;
   int si = 0;
   cout << "s: ";
@@ -53,13 +53,18 @@ void printAlignment(vector<int> &path, string &s, string &t)
   cout << "\n";
 }
 
-void traceback(int i, int j, vvi &dp, string &s, string &t, vector<int> &path, ll &count)
+inline int max3(int a, int b, int c)
+{
+  return max(max(a, b), c);
+}
+
+void traceback(int i, int j, vvi &dp, string &s, string &t, vector<int> &path, ll &count, int &index)
 {
   if (i == 0 && j == 0)
   {
     // "Código para imprimir el alineamiento"
     cout << "[" << ++count << "]\n";
-    printAlignment(path, s, t);
+    printAlignment(path, s, t, index);
     cout << '\n';
 
     // "Código para imprimir los pasos"
@@ -67,7 +72,7 @@ void traceback(int i, int j, vvi &dp, string &s, string &t, vector<int> &path, l
     // for (auto dir : path)
     //   cout << dir;
     // cout << '\n';
-    
+
     // "Código para contar los alineamientos"
     // ++count;
 
@@ -98,33 +103,27 @@ void traceback(int i, int j, vvi &dp, string &s, string &t, vector<int> &path, l
       up = dp[i][j - 1] - penaltyScore;
     }
 
-    max = std::max(diag, up);
-    max = std::max(max, left);
+    max = max3(diag, up, left);
 
     if (diag == max)
     {
-      path.push_back(!match);
-      traceback(i - 1, j - 1, dp, s, t, path, count);
-      path.pop_back();
+      path[index++] = !match;
+      traceback(i - 1, j - 1, dp, s, t, path, count, index);
+      index--;
     }
     if (up == max)
     {
-      path.push_back(2);
-      traceback(i, j - 1, dp, s, t, path, count);
-      path.pop_back();
+      path[index++] = 2;
+      traceback(i, j - 1, dp, s, t, path, count, index);
+      index--;
     }
     if (left == max)
     {
-      path.push_back(3);
-      traceback(i - 1, j, dp, s, t, path, count);
-      path.pop_back();
+      path[index++] = 3;
+      traceback(i - 1, j, dp, s, t, path, count, index);
+      index--;
     }
   }
-}
-
-int max3(int a, int b, int c)
-{
-  return max(max(a, b), c);
 }
 
 void show(vvi &dp)
@@ -171,12 +170,14 @@ void nw(std::string &s, std::string &t)
   cout << "s: " << s << '\n';
   cout << "t: " << t << "\n\n";
 
-  vector<int> tmpPath;
+  vector<int> tmpPath(rows + cols);
   ll count = 0;
+  int index = 0;
+
   cout << BOLD_TEXT << GREEN_TEXT << "[ INFO | Possible Alignments with score " << dp[s.size()][t.size()] << "]\n"
        << RESET_COLOR;
   start = chrono::high_resolution_clock::now();
-  traceback(rows, cols, dp, s, t, tmpPath, count);
+  traceback(rows, cols, dp, s, t, tmpPath, count, index);
   stop = chrono::high_resolution_clock::now();
   std::chrono::duration<double, std::milli> seqTime = stop - start;
 
@@ -230,11 +231,10 @@ int main()
   string dir = "../sequences";
   vector<string> filenames = getFilenames(dir);
   unordered_map<string, string> sequences = getSequences(filenames);
-  // printSequences(sequences);
+  printSequences(sequences);
 
-  // std::string s, t;
-  // s = "aaac";
-  // t = "agc";
-  // nw(s, t);
-  nw(sequences["Bacteria"], sequences["Sars-Cov"]);
+  std::string s, t;
+  s = sequences["Bacteria"];
+  t = sequences["Sars-Cov"];
+  nw(s, t);
 }
