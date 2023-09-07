@@ -162,6 +162,8 @@ void nw(std::string &s, std::string &t)
           dp[i - 1][j] - penaltyScore,
           dp[i][j - 1] - penaltyScore);
 
+  cout<<'\n';
+
   auto stop = chrono::high_resolution_clock::now();
   std::chrono::duration<double, std::milli> dpTime = stop - start;
 
@@ -174,14 +176,19 @@ void nw(std::string &s, std::string &t)
   ll count = 0;
   int index = 0;
 
-  cout << BOLD_TEXT << GREEN_TEXT << "[ INFO | Possible Alignments with score " << dp[s.size()][t.size()] << "]\n"
+  cout << BOLD_TEXT << GREEN_TEXT << "[ INFO | Possible Alignments ]\n"
        << RESET_COLOR;
   start = chrono::high_resolution_clock::now();
   traceback(rows, cols, dp, s, t, tmpPath, count, index);
   stop = chrono::high_resolution_clock::now();
   std::chrono::duration<double, std::milli> seqTime = stop - start;
 
-  cout << BOLD_TEXT << GREEN_TEXT << "[ INFO | " << count << " alignments,\nnw in " << dpTime.count() << " milliseconds and \nalignment in " << seqTime.count() << " milliseconds.\nIn total, it's " << dpTime.count() + seqTime.count() << "]\n";
+  cout << BOLD_TEXT << GREEN_TEXT << "[ INFO | Summary]\n";
+  cout << "max score: " << dp[s.size()][t.size()] <<'\n'; 
+  cout << "n of alignments: " << count <<'\n'; 
+  cout<< "score matrix: "<< dpTime.count() << " milliseconds\n";
+  cout<< "traceback: "<<seqTime.count()<<" milliseconds\n";
+  cout<<"total time: "<<dpTime.count() + seqTime.count()<<" milliseconds\n";
 }
 
 vector<string> getFilenames(string &dir)
@@ -236,5 +243,7 @@ int main()
   std::string s, t;
   s = sequences["Bacteria"];
   t = sequences["Sars-Cov"];
+  // s = "AAAC";
+  // t = "AGC";
   nw(s, t);
 }
